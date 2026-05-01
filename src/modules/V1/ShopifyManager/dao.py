@@ -13,6 +13,11 @@ class ShopifyClientDataDAO:
         return await fetch_one(query=query)
 
     @staticmethod
+    async def get_all_clientData():
+        query = select(ShopifyClientData)
+        return await fetch_all(query=query)
+
+    @staticmethod
     async def save_clientData(data: ShopifyClientDataBase):
         data = ShopifyClientData(**data.model_dump())
         return await create(data)

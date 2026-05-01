@@ -13,8 +13,15 @@ class ShopifyClientDataService:
     async def get_token(shop_name:str):
         client_data = await ShopifyClientDataDAO.get_clientData_by_shop_name(shop_name)
         if client_data:
-            return ShopifyClientDataBase.model_validate(client_data[0]).access_token 
+            return ShopifyClientDataBase.model_validate(client_data).access_token 
         return ""
+
+    @staticmethod
+    async def get_all():
+        records = await ShopifyClientDataDAO.get_all_clientData()
+        if records:
+            return [ShopifyClientDataBase.model_validate(row).model_dump(mode="json") for row in records], 200
+        return [], 200
 
     @staticmethod
     async def save(data):
@@ -27,7 +34,7 @@ class ShopifyService:
     @staticmethod
     def get_products(shop_name: str, access_token: str):
         resp = requests.get(
-            f"https://{shop_name}.com/admin/api/2026-04/products.json",
+            f"https://{shop_name}/admin/api/2026-04/products.json",
             headers={"X-Shopify-Access-Token": access_token},
         )
         resp.raise_for_status()
@@ -45,7 +52,7 @@ class ShopifyService:
         }
         # if access_mode == "online":
         #     params["grant_options[]"] = "per-user"
-        url = f"https://{shop_name}.com/admin/oauth/authorize?{urllib.parse.urlencode(params)}" # type: ignore
+        url = f"https://{shop_name}/admin/oauth/authorize?{urllib.parse.urlencode(params)}" # type: ignore
         return url, state
 
     @staticmethod

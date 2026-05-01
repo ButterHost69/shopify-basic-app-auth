@@ -12,6 +12,14 @@ from app.utility import verify_hmac
 
 from .services import ShopifyClientDataService, ShopifyService
 
+async def handle_list_stores(request_type: str, req: Request):
+    match request_type:
+        case "GET":
+            result, status_code = await ShopifyClientDataService.get_all()
+            return ApiResponse.success(data=result, message="All stored tokens", code=status_code)
+        case _:
+            return ApiResponse.error(message="Method not allowed", code=405, data=None)
+
 async def handle_auth(request_type: str, req: Request, shop_name:Optional[str]=None):
     config = import_settings()
     match request_type:
@@ -45,7 +53,7 @@ async def handle_auth(request_type: str, req: Request, shop_name:Optional[str]=N
                 )
                 
                 result, status_code = await ShopifyClientDataService.save({
-                    "shop_name":shop_name,
+                    "shop_name":shop,
                     "access_token":token_data["access_token"],
                     "scope":token_data["scope"]
                 })
@@ -57,10 +65,10 @@ async def handle_auth(request_type: str, req: Request, shop_name:Optional[str]=N
     return ApiResponse.success(data=result, message=message, code=status_code)      
 
 async def handle_products(request_type: str, req: Request, shop_name:str):
-    access_token = await ShopifyClientDataService.get_token(f"{shop_name}.com")
+    access_token = await ShopifyClientDataService.get_token(shop_name)
     if access_token:
-        result, status_code = ShopifyService.get_products(shop_name, access_token), 200
+        result, status_code = ShopifyService.get_products(shop_name, access_token)
         message = "fetched from shopify"
         return ApiResponse.success(data=result, message=message, code=status_code)      
     else:
-        return ApiResponse.error(message=f"access token not found for shop:{shop_name}.com", code=405, data=None)
+        return ApiResponse.error(message=f"access token not found for shop:{shop_name}", code=405, data=None)
